@@ -73,7 +73,7 @@ var count int
 	defer userLikeList.Unlock()
 
 	for userId, userLike := range userLikeList.list {
-		if !userLike.consolidated && now.Sub(userLike.lastViewed).Seconds()>10 {
+		if !userLike.consolidated && now.Sub(userLike.lastViewed).Seconds()>5*60 {
 			tmp := userLikeList.list[userId]
 			tmp.consolidated=true
 			userLikeList.list[userId]=tmp
@@ -106,5 +106,5 @@ func (userLikeList *UserLikeList) consolidateCron(d time.Duration) {
 }
 
 func (userLikeList *UserLikeList) installCronThatConsolidates() {
-	go userLikeList.consolidateCron( 3 * time.Second )
+	go userLikeList.consolidateCron( 30 * time.Second )
 }
