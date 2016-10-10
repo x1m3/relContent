@@ -9,6 +9,10 @@ import (
 	"log"
 	"crypto/md5"
 	"encoding/hex"
+	"strconv"
+	"fmt"
+	"math/rand"
+	"time"
 )
 
 type Response struct {
@@ -67,9 +71,28 @@ func viewLikeAction( w http.ResponseWriter, request *http.Request) {
 
 
 var userLikes UserLikeList
+var graph *Graph
 
 func main() {
+
 	userLikes.init()
+	graph = newGraph()
+
+	rand.Seed(int64(time.Now().Second()))
+	for i:=0;i<100;i++ {
+		for j:=0; j<100; j++ {
+			graph.annotateRelationBidirectional(strconv.Itoa(i), strconv.Itoa(j),rand.Intn(10))
+		}
+	}
+
+	for i:=0;i<100;i++ {
+		vertex := graph.relatedNodes(strconv.Itoa(i))
+		fmt.Println(vertex)
+	}
+
+
+
+
 
 	router := mux.NewRouter()
 	router.HandleFunc("/like", registerLikeAction).Methods("POST");
