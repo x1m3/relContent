@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"os"
 )
 
 type Response struct {
@@ -72,8 +73,17 @@ func viewLikeAction( w http.ResponseWriter, request *http.Request) {
 
 var userLikes UserLikeList
 var graph *Graph
+var config Config
 
 func main() {
+
+	ok:=config.load("config.conf")
+	if (!ok) {
+		log.Fatal("Error reading config file");
+	}
+
+	os.Exit(0)
+
 
 	userLikes.init()
 	graph = newGraph()

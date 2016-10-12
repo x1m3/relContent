@@ -74,7 +74,7 @@ var count int
 
 	for userId, userLike := range userLikeList.list {
 		if !userLike.consolidated &&
-		len(userLike.contentIds)>3 &&
+		len(userLike.contentIds)>=3 &&
 		now.Sub(userLike.lastViewed).Seconds()>5*60 {
 			tmp := userLikeList.list[userId]
 			tmp.consolidated=true
