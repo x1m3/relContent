@@ -10,9 +10,9 @@ import (
 )
 
 type UserLike struct {
-	userId string
-	contentIds []string
-	lastViewed time.Time
+	userId       string
+	contentIds   []string
+	lastViewed   time.Time
 	consolidated bool
 }
 
@@ -20,7 +20,7 @@ func (userLike UserLike)  toJson() string {
 var consolidated string
 
 	consolidated="false"
-	if  userLike.consolidated==true {
+	if  userLike.consolidated ==true {
 		consolidated="true"
 	}
 	jsonContentIds,_ := json.Marshal(userLike.contentIds)

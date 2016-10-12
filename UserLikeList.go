@@ -62,7 +62,7 @@ func (userLikeList *UserLikeList) annotateLike( likeRequest Like) {
 	}
 }
 
-func (userLikeList *UserLikeList) consolidate(consChannel chan string) int {
+func (userLikeList *UserLikeList) consolidate(consChannel chan string, config *Config) int {
 var count int
 
 	count=0
@@ -74,10 +74,10 @@ var count int
 
 	for userId, userLike := range userLikeList.list {
 		if !userLike.consolidated &&
-		len(userLike.contentIds)>=3 &&
-		now.Sub(userLike.lastViewed).Seconds()>5*60 {
+		len(userLike.contentIds)>=config.Runtime.MinSessionSize &&
+		int(now.Sub(userLike.lastViewed).Seconds())>config.Runtime.SessionClosedAfterSeconds {
 			tmp := userLikeList.list[userId]
-			tmp.consolidated=true
+			tmp.consolidated =true
 			userLikeList.list[userId]=tmp
 
 			go userLikeList.list[userId].save( consChannel )
@@ -97,16 +97,16 @@ func (userLikeList *UserLikeList) removeConsolidated( toRemoveChannel chan strin
 	}
 }
 
-func (userLikeList *UserLikeList) consolidateCron(d time.Duration) {
+func (userLikeList *UserLikeList) consolidateCron(config *Config) {
 	for {
-		time.Sleep(d)
+		time.Sleep(time.Second *  time.Duration(config.Runtime.RunConsolidatorEverySeconds))
 		consolidatedChannel := make(chan string, 20)
-		countRemoved:=userLikeList.consolidate(consolidatedChannel)
+		countRemoved:=userLikeList.consolidate(consolidatedChannel, config)
 		userLikeList.removeConsolidated(consolidatedChannel, countRemoved)
 		close(consolidatedChannel)
 	}
 }
 
-func (userLikeList *UserLikeList) installCronThatConsolidates() {
-	go userLikeList.consolidateCron( 30 * time.Second )
+func (userLikeList *UserLikeList) installCronThatConsolidates(config *Config) {
+	go userLikeList.consolidateCron( config)
 }

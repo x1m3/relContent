@@ -6,12 +6,25 @@ import (
 )
 
 type Config struct {
+	Global global
+	Runtime runtime
+	API api
+}
+
+type global struct {
+	DatabaseFilename string `toml:"database_filename"`
+}
+
+type runtime struct {
 	RunConsolidatorEverySeconds int `toml:"run_consolidator_every"`
 	SessionClosedAfterSeconds int `toml:"session_closed_after"`
 	MinSessionSize int `toml:"min_session_size"`
-	DatabaseFilename string `toml:"database_filename"`
+}
+
+type api struct {
 	NonceSecret string `toml:"nonce_secret"`
 }
+
 
 func (conf *Config) load(configFileName string) bool {
 
@@ -21,8 +34,6 @@ func (conf *Config) load(configFileName string) bool {
 		fmt.Println(err)
 		return false
 	}
-	fmt.Println(conf)
-
 	return true
 }
 

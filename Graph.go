@@ -3,6 +3,10 @@ package main
 import (
 	"sync"
 	"sort"
+	"os"
+	"log"
+	"bufio"
+	"encoding/json"
 )
 
 type Graph struct{
@@ -64,6 +68,47 @@ var ok bool
 func (graph *Graph) annotateRelationBidirectional(node1Id string, node2Id string, weight int) {
 	graph.annotateRelation(node1Id, node2Id, weight)
 	graph.annotateRelation(node2Id, node1Id, weight)
+}
+
+/*
+ * TODO: Inject a repo instead of reading directly from file
+ */
+func (graph *Graph) loadData(config *Config) {
+
+	file, err := os.Open(config.Global.DatabaseFilename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+
+	type UserLikeTemp struct {
+		UserId       string  `json:"user_id"`
+		ContentIds   []string `json:"content_ids"`
+		LastViewed   string   `json:"lastViewed"`
+		Consolidated bool     `json:"consolidated"`
+	}
+	var session UserLikeTemp
+
+	i:=0
+	for scanner.Scan() {
+		line := scanner.Text()
+		err := json.Unmarshal([]byte(line), &session)
+		if (err!=nil) {
+			log.Fatal(err)
+		}
+		for _,id1:= range session.ContentIds {
+			for _,id2:= range session.ContentIds {
+				if id1!=id2 {
+					graph.annotateRelationBidirectional(id1, id2, 1)
+				}
+			}
+		}
+		i++
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 type Edges struct {
