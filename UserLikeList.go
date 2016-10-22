@@ -4,7 +4,7 @@ import (
 	"time"
 	"sync"
 	"bytes"
-	"fmt"
+	"log"
 )
 
 type UserLikeList struct {
@@ -67,7 +67,7 @@ var count int
 
 	count=0
 	now :=time.Now()
-	fmt.Println("Consolidando")
+	log.Println("Consolidating obsolete sessions")
 
 	userLikeList.Lock()
 	defer userLikeList.Unlock()
@@ -76,6 +76,9 @@ var count int
 		if !userLike.consolidated &&
 		len(userLike.contentIds)>=config.Runtime.MinSessionSize &&
 		int(now.Sub(userLike.lastViewed).Seconds())>config.Runtime.SessionClosedAfterSeconds {
+
+			graph.annotateAllRelationsBidirectional(&userLike);
+
 			tmp := userLikeList.list[userId]
 			tmp.consolidated =true
 			userLikeList.list[userId]=tmp

@@ -7,6 +7,7 @@ import (
 	"log"
 	"bufio"
 	"encoding/json"
+	"fmt"
 )
 
 type Graph struct{
@@ -47,7 +48,7 @@ var ok bool
 	graph.Unlock()
 }
 
-func (graph *Graph) annotateRelation(node1Id string, node2Id string, weight int) {
+func (graph *Graph) annotateOneRelation(node1Id string, node2Id string, weight int) {
 var vertex Vertex
 var ok bool
 	graph.addNodeIfNotExists(node1Id)
@@ -65,9 +66,9 @@ var ok bool
 	graph.Unlock()
 }
 
-func (graph *Graph) annotateRelationBidirectional(node1Id string, node2Id string, weight int) {
-	graph.annotateRelation(node1Id, node2Id, weight)
-	graph.annotateRelation(node2Id, node1Id, weight)
+func (graph *Graph) annotateOneRelationBidirectional(node1Id string, node2Id string, weight int) {
+	graph.annotateOneRelation(node1Id, node2Id, weight)
+	graph.annotateOneRelation(node2Id, node1Id, weight)
 }
 
 /*
@@ -88,26 +89,33 @@ func (graph *Graph) loadData(config *Config) {
 		LastViewed   string   `json:"lastViewed"`
 		Consolidated bool     `json:"consolidated"`
 	}
-	var session UserLikeTemp
+	var sessionTemp UserLikeTemp
 
 	i:=0
 	for scanner.Scan() {
 		line := scanner.Text()
-		err := json.Unmarshal([]byte(line), &session)
+		err := json.Unmarshal([]byte(line), &sessionTemp)
 		if (err!=nil) {
 			log.Fatal(err)
 		}
-		for _,id1:= range session.ContentIds {
-			for _,id2:= range session.ContentIds {
-				if id1!=id2 {
-					graph.annotateRelationBidirectional(id1, id2, 1)
-				}
-			}
-		}
+
+		session := UserLike{contentIds:sessionTemp.ContentIds }
+
+		graph.annotateAllRelationsBidirectional(&session);
 		i++
 	}
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func (graph *Graph) annotateAllRelationsBidirectional(session *UserLike ) {
+	for _,id1:= range session.contentIds {
+		for _,id2:= range session.contentIds {
+			if id1!=id2 {
+				graph.annotateOneRelationBidirectional(id1, id2, 1)
+			}
+		}
 	}
 }
 
@@ -135,6 +143,10 @@ func newVertex(edgeId string, weight int) (*Vertex) {
 	vertex.edgeId= edgeId
 	vertex.weight= weight
 	return vertex;
+}
+
+func (vertex *Vertex) toJson() string {
+	return fmt.Sprintf("{\"id\":%s, \"weight\":%d}", vertex.edgeId, vertex.weight)
 }
 
 
